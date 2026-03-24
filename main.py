@@ -1,4 +1,4 @@
-"""Entry point for the map-based search simulation dashboard."""
+"""Entry point for the PySide6 + PyQtGraph search simulation desktop app."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ from algorithms import SearchTrace, compute_search_traces
 from config import DEFAULT_CONFIG, SimulationConfig, normalize_algorithm_name
 from map_utils import load_graph, nearest_graph_node, resolve_location
 from visualization import (
-    SearchDashboard,
     SimulationBundle,
     format_distance,
     format_optimal,
@@ -164,7 +163,7 @@ def print_metrics_summary(traces: dict[str, SearchTrace]) -> None:
 
 
 def main() -> None:
-    """Entrypoint for the dashboard."""
+    """Entrypoint for the desktop app."""
 
     config = build_config(parse_args())
     bundle = load_simulation_bundle(config)
@@ -173,8 +172,9 @@ def main() -> None:
         print_metrics_summary(bundle.traces)
         return
 
-    dashboard = SearchDashboard(bundle, load_simulation_bundle)
-    dashboard.show()
+    from ui import launch_app
+
+    raise SystemExit(launch_app(bundle, load_simulation_bundle))
 
 
 if __name__ == "__main__":

@@ -1,76 +1,70 @@
-# Graph Search Map Simulator
+# Pathfinder Search Dashboard
 
-This project is a local Python simulator that replays classic graph search algorithms on a real OpenStreetMap street network. It uses `OSMnx` to download and cache the map, `NetworkX` for the graph, and `matplotlib` widgets for the live interactive controls.
+This project is a local Python desktop app for replaying classic graph search algorithms on a real OpenStreetMap road network. It keeps `OSMnx` for map download/caching, `NetworkX` for the graph/search logic, and now uses `PySide6` + `PyQtGraph` for a faster, more spacious simulation dashboard.
 
-The default configuration uses Melbourne only as an example:
+The default scenario uses Melbourne only as a demo:
 
 - Place: `Melbourne, Victoria, Australia`
 - Start: `Monash University Clayton campus`
 - Goal: `State Library Victoria, Melbourne`
 
-You can switch to another city, region, network type, start, or goal without changing the search or plotting logic.
+You can change the city, network type, start, and goal without touching the core search or visualization code.
 
 ## Files
 
-- `main.py`: entry point, CLI handling, and interactive UI
+- `main.py`: CLI entry point, scenario loading, headless summary mode, and app launch
 - `algorithms.py`: BFS, DFS, Dijkstra, A*, and Greedy Best-First Search with replay traces
-- `map_utils.py`: geocoding, graph download/cache, nearest-node lookup, and plotting helpers
-- `visualization.py`: dashboard-style matplotlib layout, controls, and fast playback overlays
-- `config.py`: editable defaults for place, endpoints, network type, speed, and algorithm
+- `map_utils.py`: OSM loading, caching, geocoding, nearest-node lookup, and graph helpers
+- `ui.py`: PySide6 desktop window, controls, metrics panels, and playback orchestration
+- `visualization.py`: PyQtGraph map canvas, layered overlays, and rendering helpers
+- `config.py`: editable defaults for place, endpoints, network type, speed, and playback tuning
 - `requirements.txt`: Python dependencies
 
 ## Features
 
-- Real street or walking network from OpenStreetMap
-- Configurable `place_name`, `network_type`, `start_query`, `goal_query`
-- Optional direct coordinates with `start_lat`, `start_lon`, `goal_lat`, `goal_lon`
-- Precomputed step-by-step search traces for smooth replay
-- Dashboard layout with:
-  - a large left map panel
-  - a right route/control sidebar
-  - a bottom live metrics/status panel
-- Interactive matplotlib controls:
-  - route text fields plus optional coordinate fields
-  - `Apply Route`
-  - `Start / Resume`
-  - `Pause / Stop`
-  - `Next Step`
-  - `Reset`
-  - speed slider
-  - batch-step slider
-  - algorithm selector
-  - compare mode toggle
-  - adaptive stepping toggle
-- Stronger visual states:
-  - unexplored graph in light gray
-  - faded historical exploration in blue
-  - bright recent trail overlay
-  - emphasized frontier in orange
-  - final path in red
-  - start and goal labels
-- Live status/summary showing:
+- Real road/walking/bike networks from OpenStreetMap
+- Configurable:
+  - `place_name`
+  - `network_type`
+  - `start_query`
+  - `goal_query`
+  - direct coordinates for start/goal
   - selected algorithm
-  - step count
-  - elapsed search time
-  - explored node count
-  - frontier size
+  - animation speed
+  - batch stepping
+- Resizable PySide6 desktop dashboard with:
+  - large main map area
+  - right control sidebar
+  - lower metrics and summary panels
+  - splitter-based layout
+- Fast PyQtGraph rendering:
+  - base map drawn once
+  - lightweight overlay updates during playback
+  - brighter recent search trail
+  - emphasized frontier
+  - final path overlay
+- Route update workflow from the UI with background scenario loading
+- Sequential compare mode
+- Metrics for every algorithm:
+  - runtime
+  - explored nodes
   - path cost
-  - current status
+  - path length
+  - found/not found
   - optimal/not optimal under the chosen weighting
-- Comparison panel listing metrics for all algorithms with optimality flags
 - Optional CSV export of summary metrics
 - Local graph caching in `cache/graphs/`
 
 ## Installation
 
-Activate your environment, then install the dependencies.
+Activate your environment, then install the dependencies:
 
 ```powershell
 conda activate pathfinder
 pip install -r requirements.txt
 ```
 
-If you prefer using the environment's Python directly:
+Or use the environment Python directly:
 
 ```powershell
 C:\Users\han\anaconda3\envs\pathfinder\python.exe -m pip install -r requirements.txt
@@ -78,23 +72,49 @@ C:\Users\han\anaconda3\envs\pathfinder\python.exe -m pip install -r requirements
 
 ## Run
 
-With the default Melbourne example:
+Default Melbourne demo:
 
 ```powershell
 python main.py
 ```
 
-Or with the environment Python explicitly:
+Or:
 
 ```powershell
 C:\Users\han\anaconda3\envs\pathfinder\python.exe main.py
 ```
 
+The first run can take a while because the app downloads/caches the map and precomputes all algorithm traces. After that, reruns are much faster.
+
+## Dashboard layout
+
+- The map is the main visual focus on the left.
+- The right sidebar contains:
+  - `Route Setup`
+  - `Algorithm`
+  - `Playback`
+- The lower panel contains:
+  - live metrics
+  - a summary table for all algorithms
+  - session/legend information
+
+## Controls
+
+- `Load / Update Scenario`: load a new city/start/goal/network combination
+- `Start / Resume`: begin playback
+- `Pause`: stop playback without resetting
+- `Next Step`: advance one search step
+- `Reset`: restart the current algorithm replay
+- `Speed`: increases base playback rate
+- `Batch`: advances multiple search steps per timer tick
+- `Sequential compare mode`: automatically rolls through the algorithms
+- `Adaptive stepping`: slower near the start/end, faster in the middle of long runs
+
 ## Configuration
 
-Edit the defaults in `config.py`, or override them from the command line.
+Edit `config.py`, or override settings from the CLI.
 
-Example configuration values in `config.py`:
+Example defaults:
 
 ```python
 DEFAULT_CONFIG = SimulationConfig(
@@ -110,14 +130,20 @@ DEFAULT_CONFIG = SimulationConfig(
 )
 ```
 
-The default example uses a route-centered graph radius so the initial Melbourne run stays responsive.
+The default demo uses a route-centered graph radius so the working graph stays reasonable.
 
-### Useful CLI examples
+## CLI examples
 
-Run the default example but start on Dijkstra:
+Start on Dijkstra:
 
 ```powershell
 python main.py --algorithm Dijkstra
+```
+
+Enable compare mode:
+
+```powershell
+python main.py --compare-mode
 ```
 
 Increase playback throughput:
@@ -126,19 +152,7 @@ Increase playback throughput:
 python main.py --animation-speed 12 --batch-steps 3
 ```
 
-Start with compare mode enabled:
-
-```powershell
-python main.py --compare-mode
-```
-
-Switch to a driving network:
-
-```powershell
-python main.py --network-type drive
-```
-
-Run in another city:
+Use another city:
 
 ```powershell
 python main.py `
@@ -148,7 +162,7 @@ python main.py `
   --network-type walk
 ```
 
-Use direct coordinates instead of text lookup:
+Use direct coordinates:
 
 ```powershell
 python main.py `
@@ -157,11 +171,9 @@ python main.py `
   --goal-lat -37.8097 --goal-lon 144.9653
 ```
 
-If text geocoding fails, the program will fall back to coordinates when both latitude and longitude are provided.
+## Large-region performance
 
-### Large-region performance
-
-For large places, you can download a point-centered graph around the route corridor instead of the whole place:
+If a place is large, use a working graph radius so the app loads a point-centered subgraph around the route corridor instead of the whole place:
 
 ```powershell
 python main.py `
@@ -171,38 +183,35 @@ python main.py `
   --graph-radius-m 12000
 ```
 
-When `--graph-radius-m` is set, the simulator downloads a graph around the midpoint between start and goal, enlarged by the straight-line distance plus a buffer.
-
-## Dashboard usage
-
-- The left panel is the live map animation.
-- The right sidebar lets you edit the place, start, goal, coordinates, network type, and route radius, then click `Apply Route`.
-- `Speed` controls the base steps per playback tick.
-- `Batch` lets one frame advance multiple search steps for smoother large-graph playback.
-- `Adaptive stepping` automatically slows the beginning/end of the run and speeds up the middle for long traces.
-- `Compare mode` replays the selected algorithm and then rolls through the rest of the algorithms sequentially.
-- The bottom metrics panel keeps a live status card, an always-visible algorithm summary, and a session card with the last completed result.
+When `--graph-radius-m` is set, the app downloads a graph around the midpoint between start and goal, expanded by the straight-line distance plus a buffer.
 
 ## Algorithm notes
 
-- BFS and DFS run on the same real street graph but ignore edge weights by design.
-- Dijkstra and A* use the OSM edge `length` attribute as the route cost.
+- BFS and DFS ignore edge weights by design.
+- Dijkstra and A* use OSM edge `length` as the route cost.
 - A* uses straight-line geographic distance to the goal as the heuristic.
-- Greedy Best-First Search uses the heuristic only, so it is not guaranteed to return an optimal route.
-- Dijkstra and A* should match on path cost when both find a path.
+- Greedy Best-First Search uses only the heuristic and is not guaranteed to be optimal.
+- Dijkstra and A* should match on weighted path cost when both find a path.
 
-## Optional headless run
+## Headless mode
 
-This is mainly an interactive GUI project, but you can precompute everything without opening the window:
+You can still precompute everything without launching the GUI:
 
 ```powershell
 python main.py --no-gui --metrics-csv outputs/search_metrics.csv
 ```
 
-The CSV now includes path cost, path length, and whether each returned path is optimal under the chosen weighting.
+The CSV includes:
+
+- runtime
+- explored nodes
+- path cost
+- path length
+- found/not found
+- optimal/not optimal
 
 ## Geocoding notes
 
 - Queries work best when they are specific, for example `State Library Victoria, Melbourne`.
 - The resolver tries both the raw query and a place-qualified variant such as `<query>, <place_name>`.
-- If geocoding is ambiguous or fails, provide explicit coordinates instead.
+- If geocoding fails or is ambiguous, provide explicit coordinates instead.
