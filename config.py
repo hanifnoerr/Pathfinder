@@ -53,9 +53,14 @@ class SimulationConfig:
     goal_lat: float | None = None
     goal_lon: float | None = None
     animation_speed: float = 8.0
+    batch_steps: int = 1
+    compare_mode: bool = False
     selected_algorithm: str = "A*"
     graph_radius_m: float | None = 12000.0
     graph_buffer_m: float = 1500.0
+    trail_length: int = 180
+    max_history_nodes: int = 12000
+    max_frontier_nodes: int = 3000
     cache_dir: Path = Path("cache")
     metrics_csv_path: Path | None = None
     no_gui: bool = False
@@ -69,6 +74,15 @@ class SimulationConfig:
 
         if self.animation_speed <= 0:
             raise ValueError("animation_speed must be greater than 0.")
+
+        if self.batch_steps <= 0:
+            raise ValueError("batch_steps must be greater than 0.")
+
+        if self.trail_length <= 0:
+            raise ValueError("trail_length must be greater than 0.")
+
+        if self.max_history_nodes <= 0 or self.max_frontier_nodes <= 0:
+            raise ValueError("render caps must be greater than 0.")
 
         normalize_algorithm_name(self.selected_algorithm)
 

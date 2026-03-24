@@ -15,6 +15,7 @@ You can switch to another city, region, network type, start, or goal without cha
 - `main.py`: entry point, CLI handling, and interactive UI
 - `algorithms.py`: BFS, DFS, Dijkstra, A*, and Greedy Best-First Search with replay traces
 - `map_utils.py`: geocoding, graph download/cache, nearest-node lookup, and plotting helpers
+- `visualization.py`: dashboard-style matplotlib layout, controls, and fast playback overlays
 - `config.py`: editable defaults for place, endpoints, network type, speed, and algorithm
 - `requirements.txt`: Python dependencies
 
@@ -24,22 +25,39 @@ You can switch to another city, region, network type, start, or goal without cha
 - Configurable `place_name`, `network_type`, `start_query`, `goal_query`
 - Optional direct coordinates with `start_lat`, `start_lon`, `goal_lat`, `goal_lon`
 - Precomputed step-by-step search traces for smooth replay
+- Dashboard layout with:
+  - a large left map panel
+  - a right route/control sidebar
+  - a bottom live metrics/status panel
 - Interactive matplotlib controls:
+  - route text fields plus optional coordinate fields
+  - `Apply Route`
   - `Start / Resume`
-  - `Stop / Pause`
-  - `Next`
-  - `Reset / Init`
+  - `Pause / Stop`
+  - `Next Step`
+  - `Reset`
   - speed slider
-  - algorithm radio selector
-- Live overlay showing:
+  - batch-step slider
+  - algorithm selector
+  - compare mode toggle
+  - adaptive stepping toggle
+- Stronger visual states:
+  - unexplored graph in light gray
+  - faded historical exploration in blue
+  - bright recent trail overlay
+  - emphasized frontier in orange
+  - final path in red
+  - start and goal labels
+- Live status/summary showing:
   - selected algorithm
   - step count
   - elapsed search time
-  - visited node count
+  - explored node count
   - frontier size
-  - path length
+  - path cost
   - current status
-- Comparison panel listing metrics for all algorithms
+  - optimal/not optimal under the chosen weighting
+- Comparison panel listing metrics for all algorithms with optimality flags
 - Optional CSV export of summary metrics
 - Local graph caching in `cache/graphs/`
 
@@ -86,6 +104,8 @@ DEFAULT_CONFIG = SimulationConfig(
     goal_query="State Library Victoria, Melbourne",
     graph_radius_m=12000.0,
     animation_speed=8.0,
+    batch_steps=1,
+    compare_mode=False,
     selected_algorithm="A*",
 )
 ```
@@ -98,6 +118,18 @@ Run the default example but start on Dijkstra:
 
 ```powershell
 python main.py --algorithm Dijkstra
+```
+
+Increase playback throughput:
+
+```powershell
+python main.py --animation-speed 12 --batch-steps 3
+```
+
+Start with compare mode enabled:
+
+```powershell
+python main.py --compare-mode
 ```
 
 Switch to a driving network:
@@ -141,6 +173,16 @@ python main.py `
 
 When `--graph-radius-m` is set, the simulator downloads a graph around the midpoint between start and goal, enlarged by the straight-line distance plus a buffer.
 
+## Dashboard usage
+
+- The left panel is the live map animation.
+- The right sidebar lets you edit the place, start, goal, coordinates, network type, and route radius, then click `Apply Route`.
+- `Speed` controls the base steps per playback tick.
+- `Batch` lets one frame advance multiple search steps for smoother large-graph playback.
+- `Adaptive stepping` automatically slows the beginning/end of the run and speeds up the middle for long traces.
+- `Compare mode` replays the selected algorithm and then rolls through the rest of the algorithms sequentially.
+- The bottom metrics panel keeps a live status card, an always-visible algorithm summary, and a session card with the last completed result.
+
 ## Algorithm notes
 
 - BFS and DFS run on the same real street graph but ignore edge weights by design.
@@ -156,6 +198,8 @@ This is mainly an interactive GUI project, but you can precompute everything wit
 ```powershell
 python main.py --no-gui --metrics-csv outputs/search_metrics.csv
 ```
+
+The CSV now includes path cost, path length, and whether each returned path is optimal under the chosen weighting.
 
 ## Geocoding notes
 

@@ -40,8 +40,10 @@ class SearchMetrics:
     visited_count: int
     frontier_peak: int
     runtime_seconds: float
+    path_cost_m: float | None
     path_length_m: float | None
     explored_fraction: float
+    optimal_under_weighting: bool | None = None
 
 
 @dataclass(slots=True)
@@ -186,6 +188,7 @@ def finalise_trace(
         visited_count=len(visit_order),
         frontier_peak=frontier_peak,
         runtime_seconds=runtime_seconds,
+        path_cost_m=route_length,
         path_length_m=route_length,
         explored_fraction=len(visit_order) / node_count,
     )
@@ -490,7 +493,29 @@ def compute_search_traces(
     """Precompute search traces so the UI only replays stored states."""
 
     algorithm_names = selected_algorithms or list(SEARCH_ALGORITHMS.keys())
-    return {
+    traces = {
         algorithm_name: SEARCH_ALGORITHMS[algorithm_name](graph, start, goal)
         for algorithm_name in algorithm_names
     }
+    annotate_optimality(traces)
+    return traces
+
+
+def annotate_optimality(traces: dict[str, SearchTrace]) -> None:
+    """Mark whether each returned path is optimal under the length weighting."""
+
+    found_costs = [
+        trace.metrics.path_cost_m
+        for trace in traces.values()
+        if trace.metrics.found and trace.metrics.path_cost_m is not None
+    ]
+    optimal_cost = min(found_costs) if found_costs else None
+
+    for trace in traces.values():
+        if not trace.metrics.found or trace.metrics.path_cost_m is None or optimal_cost is None:
+            trace.metrics.optimal_under_weighting = None
+            continue
+
+        trace.metrics.optimal_under_weighting = (
+            abs(trace.metrics.path_cost_m - optimal_cost) <= 1e-6
+        )
