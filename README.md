@@ -1,5 +1,7 @@
 # Pathfinder Search Dashboard
 
+![til](./pathfinder_preview.gif)
+
 This project is a local Python desktop app for replaying classic graph search algorithms on a real OpenStreetMap road network. It keeps `OSMnx` for map download/caching, `NetworkX` for the graph/search logic, and now uses `PySide6` + `PyQtGraph` for a faster, more spacious simulation dashboard.
 
 The default scenario uses Melbourne only as a demo:
